@@ -11,7 +11,7 @@ load_dotenv()
 
 app = flask.Flask(__name__)
 
-MOMS_IP_IPHONE = os.getenv("MOM_IP_ADDRESS", "192.168.1.69") # Fallback if env fails
+MOMS_IP_IPHONE = os.getenv("MOM_IP_ADDRESS")
 DATABASE_NAME = "mom_tracker_final.db"
 
 # THE FINAL FRONTEND HTML
