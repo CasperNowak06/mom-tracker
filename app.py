@@ -1,43 +1,41 @@
 from flask import Flask, jsonify
 import os
+import sqlite3
 
 app = Flask(__name__)
+MOMS_IP = "192.168.1.69"
 
-MOMS_IP = "192.168.1.69" # lol
+def init_db():
+    conn = sqlite3.connect('mom.db')
+    c = conn.cursor()
+    c.execute('CREATE TABLE IF NOT EXISTS status (msg TEXT)')
+    # clear old data
+    c.execute('DELETE FROM status')
+    c.execute("INSERT INTO status VALUES ('UNKNOWN')")
+    conn.commit()
+    conn.close()
 
-HTML_CODE = """
-<!DOCTYPE html><html lang="sv"><head>
-    <meta charset="UTF-8">
-    <style>body{background:#000;color:#0f0;text-align:center;padding:50px;}</style>
-</head><body>
-    <h1>🚨 Mamma NärVarning 🚨</h1>
-    <button onclick="check()">CHECK STATUS</button>
-    <script>
-    function check() {
-        fetch('/check').then(r => r.json()).then(d => alert(d.status));
-    }
-    </script>
-</body></html>
-"""
+init_db() # Run this when app starts
 
 @app.route("/")
 def index():
-    return HTML_CODE
+    return "<h1>Go to /check to check status (no frontend rn, im fixing backend)</h1>"
 
 @app.route("/check")
 def check_mom():
-    # HACKER LOGIC
     response = os.system("ping -n 1 " + MOMS_IP)
-    status = "SAFE"
+    msg = "CHILL"
     if response == 0:
-        status = "RUN FOR YOUR LIFE"
+        msg = "PANIC"
+        
+    # SQL INJECTION (The good kind)
+    conn = sqlite3.connect('mom.db')
+    c = conn.cursor()
+    c.execute(f"UPDATE status SET msg = '{msg}'") # f-strings are fast
+    conn.commit()
+    conn.close()
     
-    # Save to file just in case (Persistence layer)
-    f = open("status.txt", "w")
-    f.write(status)
-    f.close()
-    
-    return jsonify({"status": status})
+    return jsonify({"status": msg})
 
 if __name__ == "__main__":
     app.run(debug=True)
